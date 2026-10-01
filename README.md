@@ -39,18 +39,33 @@ checker is an independent integrator plus a balance residual.
 
     python spine.py --mechanism mechanisms/hydrogen.py --json out.json
 
-    [1/4] search   12 full -> 9 species reduced, 14 reactions -> 11
-                   gate: mass residual 3.1e-16, both integrators agree
-    [2/4] property H2 conservation PROVED on the full mechanism
-                   H2 conservation PROVED on the reduced mechanism
-    [3/4] perturb  k of R3 scaled x1e6 in the reduced mechanism -> REFUTED
-    [4/4] cover    H2, H, O2, O, OH, H2O, HO2, H2O2 move; N2 never moves
+    [1/4] search   9 species, 14 reactions
+          drop_R11_HO2_H             -> 13 rxns  balance 0.0e+00  traj 1.0e-11  KEPT
+          drop_R01_and_R11           -> 12 rxns  balance 0.0e+00  traj 6.3e-05  refused
+          drop_hydroperoxyl_branch   -> 10 rxns  balance 0.0e+00  traj 1.0e-11  KEPT
+          drop_third_body_H          -> 12 rxns  balance 0.0e+00  traj 6.7e-11  KEPT
+    [2/4] property H2 conservation  full: PROVED   reduced: PROVED
+    [3/4] perturb  R1_H2_O2     (flux 3.24e-05) x1e+06 -> REFUTED (traj 2.7e-01)
+    [3/4] perturb  R3_H2_O      (flux 3.36e-17) x1e+06 -> PROVED (traj 9.8e-12)
+    [4/4] cover    moved: H, H2, HO2, O, O2, OH
+                   never moved: H2O, H2O2, N2
 
     verdict: SPINE_OK
 
-Every number in that block is printed by the run. The mechanism is the hydrogen
-oxidation skeleton (8 species, 14 reactions, the standard H2/O2 subset of GRI-Mech
-without the nitrogen chemistry) plus one deliberately inert species.
+Every line above is printed by the run. Four things in it are results and not
+decoration:
+
+- **the gate refused one candidate** (`drop_R01_and_R11`, trajectory error
+  6.3e-05) while keeping three. A search whose gate keeps everything has no gate.
+- **the property holds of the reduced mechanism**, and the reduced mechanism is
+  the one with 10 reactions, not 13 -- `drop_hydroperoxyl_branch` is kept in the
+  record but not selected.
+- **the perturb chosen by flux is caught** (R1 carries 3.2e-05 of integrated
+  flux, traj error 2.7e-01) **and the one chosen by hand is not** (R3 carries
+  3.4e-17, traj error 9.8e-12, PROVED). Both stay in the output.
+- **three species never move**: H2O, H2O2 and N2. N2 is inert by construction;
+  H2O and H2O2 are products whose formation this short time window does not
+  reach. No property told us that -- the coverage stage did.
 
 ## What each stage is actually buying, said plainly
 
@@ -108,3 +123,43 @@ bottleneck domain instead of EDA".
     mechanisms/       reaction networks, each with its stoichiometry and rates
     tests/            the gate is tested the way a gate is tested: give it
                       something it must reject
+
+## If you wanted to point this at a bottleneck domain
+
+This repo was written to answer one question with a measurement rather than an
+opinion: **which part of eda-spine is EDA, and which part is the shape of any
+trustworthy search?** The measurement says: the loop transfers, the oracle does
+not, and the oracle is where all the cost is.
+
+    domain        what plays the role of the SAT oracle      is it there?
+    ----------    -------------------------------------      -----------
+    EDA           yosys equiv_opt / sby -- free, exact       yes
+    chemistry     stoichiometry + a second integrator        yes (this repo)
+    materials     a DFT or MD code, and a reference energy   no; needs one
+    photonics     an EM solver, and a passivity identity     partially
+    aero/CFD      a conservation identity + a second solver   partially
+
+The pattern in that column is the actual finding. A gate needs **a second,
+independent way to compute the same answer**, and it has to be cheap enough to
+run per candidate. EDA is unusual because formal equivalence is both exact and
+free. Chemistry is lucky in the same way, which is why this repo could be
+written at all. A domain where the only oracle is an expensive simulation has a
+gate whose cost is the candidate cost, and the search stops being a search.
+
+The other four rows of the transfer are all cheaper than the oracle, which is
+the opposite of what the "cannot be transferred directly" worry assumes:
+
+    what has to be redone        cost                why
+    ------------------------     -----------------   ---------------------------
+    the oracle                   high, per domain    see above
+    the property set             medium              needs a domain expert to write
+    the coverage database        low                 measure, do not summarise
+    the claim that it works      low                 negative controls, as here
+
+So the honest summary of the transfer is: **four walls exist, as expected
+(domain knowledge, data, tooling, verification standard), but only one of them
+is load-bearing for this skeleton, and it is the oracle.** This repo is the
+small case where the oracle happened to be free -- and it is here to show that
+the rest of the structure did not have to change at all to move from silicon to
+kinetics, which is a stronger statement than saying the framework "can be
+adapted".
