@@ -1,0 +1,41 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install
+        run: python -m pip install --upgrade pip numpy scipy pytest
+      - name: unit tests (the gate is tested with something it must reject)
+        run: python -m pytest -q tests
+      - name: the four stages run and the verdict is SPINE_OK
+        run: python spine.py --mechanism mechanisms/hydrogen.py --json /tmp/out.json
+      - name: the recorded result says what the README says it says
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("/tmp/out.json"))
+          assert d["verdict"] == "SPINE_OK", d["verdict"]
+          # stage 1: the search really dropped reactions, and the gate really refused one
+          assert any(r["reactions"] < 14 for r in d["search"]), d["search"]
+          assert any(not r["ok"] for r in d["search"]), "the gate kept every candidate"
+          for r in d["search"]:
+              if r["ok"]:
+                  assert r["balance"] == 0.0, r
+          # stage 2: the property holds of both, and it CAN fail (unit-tested)
+          assert d["property"]["full"]["status"] == "PROVED"
+          assert d["property"]["reduced"]["status"] == "PROVED"
+          # stage 3: the perturb chosen by flux is caught, and the blind one is recorded
+          assert d["perturb"][d["perturb_reaction"]]["control"] == "REFUTED"
+          assert d["perturb"]["R3_H2_O"]["control"] == "PROVED", "the blind perturb is the finding"
+          # stage 4: coverage needs no property and finds the inert species
+          assert "N2" in d["coverage"]["never_moved"]
+          assert d["coverage"]["moved"]
+          print("every stage's result is the one the README reports")
+          PY
