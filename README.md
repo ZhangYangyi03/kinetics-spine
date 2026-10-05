@@ -163,3 +163,14 @@ small case where the oracle happened to be free -- and it is here to show that
 the rest of the structure did not have to change at all to move from silicon to
 kinetics, which is a stronger statement than saying the framework "can be
 adapted".
+
+## Related work by the same author
+
+The same claim -- *a number is meaningless until it is shown to survive its own
+verification* -- is made and measured in other domains:
+
+- [autoforge](https://github.com/ZhangYangyi03/autoforge) -- a tool's fitness, until an oracle outside the tool agrees
+- [agentic-eda](https://github.com/ZhangYangyi03/agentic-eda) -- a circuit's area, until equivalence to the reference netlist is proven
+- [debt-verify](https://github.com/ZhangYangyi03/debt-verify) -- a debt clause decision, until it survives the published revision record
+- [tool-market](https://github.com/ZhangYangyi03/tool-market) -- a tool's liveness, until the hash chain says which revision is live
+- [agent-safety-bench](https://github.com/ZhangYangyi03/agent-safety-bench) -- a model's safety compliance, measured rather than assumed
