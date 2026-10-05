@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "kinetics-spine: the trustworthy-search skeleton on chemical kinetics"
+abstract: "eda-spine's four stages with silicon replaced by a reaction network and equivalence replaced by a conservation law, answering whether those stages are the shape of EDA or the shape of any trustworthy search."
+authors:
+  - family-names: Zhang
+    given-names: Yangyi
+    affiliation: Georgetown University
+repository-code: "https://github.com/ZhangYangyi03/kinetics-spine"
+license: Apache-2.0
+type: software
+keywords: [chemical kinetics, model reduction, invariants, verification]
