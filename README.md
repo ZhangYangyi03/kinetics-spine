@@ -1,3 +1,9 @@
+> **This repository was merged into [materials-spine](https://github.com/ZhangYangyi03/materials-spine) and is archived.** > It is kept for provenance only: the code, the tables and every number below still exist, but they are maintained, extended and verified in one place now, under one hash chain. Start there.
+>
+> **本仓库已合并进 [materials-spine](https://github.com/ZhangYangyi03/materials-spine) 并归档。** > 保留它只为溯源：代码、数据表和下面每个数字都还在，但维护、扩展与验证已经收在一处，同一条哈希链上。请从那里开始。
+
+---
+
 # kinetics-spine
 
 The four-stage skeleton of [eda-spine](https://github.com/ZhangYangyi03/eda-spine),
